@@ -13,13 +13,12 @@ setaddprompt() {
 pressenter() {
     read -p "Press enter to continue:" _tmp
 }
-
-err() {
+derr() {
     echo 1>&2 ${CMDNAME} ERROR: $*
     return 1
 }
 msg() {
-    echo ${CMDNAME} NOTICE: $*
+    echo ${CMDNAME} NOTICE: $*3
     return 0
 }
 
@@ -31,13 +30,30 @@ badchoice() {
 do_add_one_user() {
     _name="$1"
     _pass="$2"
-    echo "add code here for adding one user: ${_name} ${_pass}"
+
+    # useradd -u ABCDE -g users -d /home/username -s /bin/bash -p $(echo mypasswd | openssl passwd -1 -stdin) username
+    # -u userid
+    # -d groupname
+    # -d user home directory
+    # -s default shell
+    # -p password
+    # Openssl passwd will generate hash of mypasswd to be used as secure password.
+
+    tput setaf 1
+    if [ ${#_pass} -ne 0 ]; then
+        echo "Password set"
+        # check if system has adduser and if so use that to create user with passwd, otherwise use useradd
+        # useradd -u ABCDE -g users -d /home/${_name} -s /bin/bash -p $(echo mypasswd | openssl passwd -1 -stdin) {_name}
+    else 
+        echo "User will have to set their own password (passwd on first login)"
+    fi
+    tput setaf 7
     pressenter
 }
 
 do_manual_add() {
     read -p "Username:" _username
-    read -sp "Passowrd:" _password
+    read -p "Passowrd:" _password
     echo
     do_add_one_user "${_username}" "${_password}"
 }
