@@ -1,4 +1,3 @@
-#!/bin/bash
 
 setps3() {
     PS3="$1 (press enter for choices)>"
@@ -100,7 +99,24 @@ uidcheck() {
 CMDNAME=$(basename $0)
 #uidcheck   #uncomment when need
 
-_arr_main=("Add user" "Delete user" "Exit program")
+_user_manager() {
+    setaddprompt
+    _arr_man=("Add manually" "Add via TXT" "return to main menu" "exit program")
+    select man_action in "${_arr_man[@]}"
+    do
+        case "$REPLY" in
+            1) do_adduser ;;
+            2) do_deleteuser ;;
+            3) return ;;
+            4) exit 0 ;;
+            *) badchoice ;;
+        esac
+        setaddprompt
+    done
+}
+
+#_arr_main=("Add user" "Delete user" "Exit program")
+_arr_main=("User managment" "Exit program")
 setmainprompt
 select main_action in "${_arr_main[@]}"
 do
