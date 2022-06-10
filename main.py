@@ -7,19 +7,39 @@ def main():
     print('''
     Welcome to UserMan
     ''')
-    choices = ["User management", "Folders management", "Backups"]
-    ui.print_choises(choices)
-    choise = input("What should I do?\n")
+    choices = ["User management", "Folders management", "Backups", "Quit"]
+    
+    valid = False
+
+    while(not valid):
+        ui.print_choises(choices)
+        choice = input("What should I do?\n")
+
+        match choice:
+            case "0":
+                print("User")
+                valid = True
+            case "1":
+                print("Folders")
+                valid = True
+            case "2":
+                print("Backups")
+            case "3":
+                exit()
+            case _:
+                print("Error")
+        
+        os.system('cls' if os.name == 'nt' else 'clear')
 
 
-    if(choise == "0" | "User management"):
-        ui.user_management_choises()
-    elif(choise == "1" | "Folders management"):
-        ui.folders_management_choises()
-    elif(choise == "2"):
-        print("3");
-    else:
-        print("wrong choice");
+    # if(choise == "0" | "User management"):
+    #     ui.user_management_choises()
+    # elif(choise == "1" | "Folders management"):
+    #     ui.folders_management_choises()
+    # elif(choise == "2"):
+    #     print("3");
+    # else:
+    #     print("wrong choice");
         
 
 def create_user(username, uuid, group, system, set_password):
@@ -52,3 +72,6 @@ def delete_user(username):
         return os.system(f"userdel {username}") == 0
     else:
         print("Error, I can't delete the user inserted")
+
+
+main()

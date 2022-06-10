@@ -1,6 +1,10 @@
+import os
+
 def print_choises(choices):
     for i in range(len(choices)):
-        print("\t"+ str(i) + "\t" + choices[i])
+        os.system("tput setaf 2")
+        print(""+ str(i) + "\t" + choices[i])
+        os.system("tput setaf 7")
 
 
 def user_management_choises():
