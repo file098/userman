@@ -42,7 +42,7 @@ do_add_one_user() {
     if [ ${#_pass} -ne 0 ]; then
         echo "Password set"
         # check if system has adduser and if so use that to create user with passwd, otherwise use useradd
-        # useradd -u ABCDE -g users -d /home/${_name} -s /bin/bash -p $(echo mypasswd | openssl passwd -1 -stdin) {_name}
+        useradd -u ABCDE -g users -d /home/${_name} -s /bin/bash -p $(echo mypasswd | openssl passwd -1 -stdin) {_name}
     else 
         echo "User will have to set their own password (passwd on first login)"
     fi
