@@ -1,5 +1,5 @@
 import os
-import ui
+import ui, colors
 
 def check_user_exists(user):
     return os.system(f"id {user} &>/dev/null ") == 0   
@@ -23,18 +23,19 @@ def create_user(username, uuid, group, root, set_password):
 
     result = os.system(cmd)
     if result == 0:
-        ui.print_color_msg("User created successfully", COLOR_GREEN)
+        ui.print_color_msg("User created successfully", colors.COLOR_GREEN)
         if (set_password == "y" or set_password == "Y"):
             os.system(f"passwd {username}")
         return 1;
     else:
-        print("Operation failed\n")
+        ui.print_color_msg("Operation failed", colors.COLOR_RED)
+        ui.user_menu()
         return 0;
 
 
 def change_username(prev_user, new_user):
     if os.system(f"usermod -l {new_user} {prev_user}") == 0:
-        ui.print_color_msg("Username changed successfully", COLOR_GREEN)
+        ui.print_color_msg("Username changed successfully", colors.COLOR_GREEN)
     else:
         ui.error_message()
 
@@ -49,6 +50,6 @@ def delete_user(username):
     user = username.strip()
     if check_user_exists(user):
         os.system(f"userdel {user}")
-        ui.print_color_msg(f"User {username} deleted", COLOR_GREEN)
+        ui.print_color_msg(f"User {username} deleted", colors.COLOR_GREEN)
     else:
-        ui.print_color_msg("Error, I can't delete the user inserted", COLOR_RED)
+        ui.print_color_msg("Error, I can't delete the user inserted", colors.COLOR_RED)

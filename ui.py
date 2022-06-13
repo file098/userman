@@ -1,14 +1,5 @@
 import os, re
-import user
-
-COLOR_BLACK = 0
-COLOR_RED = 1
-COLOR_GREEN = 2  
-COLOR_YELLOW = 3
-COLOR_BLUE = 4  
-COLOR_MAGENTA = 5
-COLOR_CYAN = 6
-COLOR_WHITE = 7
+import user, colors
 
 
 def main_menu():
@@ -27,10 +18,11 @@ def main_menu():
                 valid = True
             case "3":
                 print("Backups")
+                valid = True
             case "q":
                 exit()
             case _:
-                print_color_msg("Invalid option", COLOR_RED)
+                print_color_msg("Invalid option", colors.COLOR_RED)
                 main_menu()
 
 
@@ -64,7 +56,7 @@ def user_menu():
             case "b":
                 valid = True
             case _:
-                print_color_msg("Invalid option", COLOR_RED)
+                print_color_msg("Invalid option", colors.COLOR_RED)
                 main_menu()
 
     # clear()
@@ -75,7 +67,7 @@ def update_user():
     list_users()
     username = input("\n").strip()
     if user.check_user_exists(username):
-        update_choices = ["Change username", "Change home directory", "Change user's UID", "Add group to user"]
+        update_choices = ["Change username", "Change home directory", "Change user's UID", "Add group to user", "Back", "Main menu"]
         print_choices(update_choices)
         choice = what_to_do()
 
@@ -96,11 +88,14 @@ def update_user():
                     valid = True
                 case "b":
                     valid = True
+                    update_user()
+                case "q":
+                    main_menu()
                 case _:
                     print("Invalid option\n")
                     valid = True
     else:
-        print_color_msg("Invalid username", COLOR_RED)
+        print_color_msg("Invalid username", colors.COLOR_RED)
         update_user()
 
     main_menu()
@@ -115,9 +110,9 @@ def clear():
 
 def print_choices(choices):
     for i in range(len(choices)):
-        os.system("tput setaf 2")
+        os.system("tput setaf 6")
         match choices[i]:
-            case "Quit":
+            case "Quit" | "Main menu":
                 print("q" + "\t" + choices[i])
             case "Back":
                 print("b" + "\t" + choices[i])
@@ -139,6 +134,6 @@ def what_to_do():
     return input('What should I do?\n')
 
 def main_title():
-    print('''
+    print_color_msg('''
     Welcome to UserMan
-    ''')
+    ''', colors.COLOR_BLUE)
