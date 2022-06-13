@@ -1,77 +1,15 @@
 import os, sys
-import ui
-
-
+import ui, user
 
 def main():
     print('''
     Welcome to UserMan
     ''')
-    choices = ["User management", "Folders management", "Backups", "Quit"]
-    
-    valid = False
+    ui.main_menu()
 
-    while(not valid):
-        ui.print_choises(choices)
-        choice = input("What should I do?\n")
-
-        match choice:
-            case "0":
-                print("User")
-                valid = True
-            case "1":
-                print("Folders")
-                valid = True
-            case "2":
-                print("Backups")
-            case "3":
-                exit()
-            case _:
-                print("Error")
+   
         
-        os.system('cls' if os.name == 'nt' else 'clear')
-
-
-    # if(choise == "0" | "User management"):
-    #     ui.user_management_choises()
-    # elif(choise == "1" | "Folders management"):
-    #     ui.folders_management_choises()
-    # elif(choise == "2"):
-    #     print("3");
-    # else:
-    #     print("wrong choice");
+    # os.system('cls' if os.name == 'nt' else 'clear')
         
-
-def create_user(username, uuid, group, system, set_password):
-    cmd = "useradd -d /home/{username} {username}".format(group=group, username=username)
-    if system:
-        cmd += "-r"
-    if uuid:
-        cmd += "-u {uuid}".format(uuid=uuid)
-    group_len = len(group)
-    if group_len:
-        if group_len == 1:
-            cmd += "-g {group}".format(group=group)
-        else:
-            cmd += "-G "
-            for elem in group:
-                cmd += "{elem},".format(elem=elem)
-
-    if os.system(cmd) == 0:
-        print(f"Operation successful, created user {username}")
-        if set_password:
-            os.system(f"passwd {username}")
-        return 1;
-    else:
-        print("Operation failed")
-        return 0;
-
-
-def delete_user(username):
-    if os.system(f"getent passwd {username}"):
-        return os.system(f"userdel {username}") == 0
-    else:
-        print("Error, I can't delete the user inserted")
-
 
 main()
