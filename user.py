@@ -1,4 +1,8 @@
-import os 
+import os
+import ui
+
+def check_user_exists(user):
+    return os.system(f"id {user} &>/dev/null ") == 0   
 
 def create_user(username, uuid, group, root, set_password):
     cmd = "useradd -d /home/{username} {username} ".format(group=group, username=username)
@@ -19,21 +23,32 @@ def create_user(username, uuid, group, root, set_password):
 
     result = os.system(cmd)
     if result == 0:
-        print(f"Operation successful, created user {username}")
+        ui.print_color_msg("User created successfully", COLOR_GREEN)
         if (set_password == "y" or set_password == "Y"):
             os.system(f"passwd {username}")
         return 1;
     else:
-        print("Operation failed")
+        print("Operation failed\n")
         return 0;
 
 
-def update_user(username):
-    print("Update user")
+def change_username(prev_user, new_user):
+    if os.system(f"usermod -l {new_user} {prev_user}") == 0:
+        ui.print_color_msg("Username changed successfully", COLOR_GREEN)
+    else:
+        ui.error_message()
+
+
+def change_home_directory(user, path, move_files):
+    cmd  = "usermod -d {path} {user}".format(path=path, user=user)
+    if(move_files == "y"):
+        cmd = "usermod -d {path} -m {user}".format(path=path, user=user)
+    return os.system(cmd) == 0
 
 def delete_user(username):
     user = username.strip()
-    if os.system(f"id {user} &>/dev/null ") == 0:
+    if check_user_exists(user):
         os.system(f"userdel {user}")
+        ui.print_color_msg(f"User {username} deleted", COLOR_GREEN)
     else:
-        print("Error, I can't delete the user inserted")
+        ui.print_color_msg("Error, I can't delete the user inserted", COLOR_RED)
