@@ -50,6 +50,7 @@ def user_menu():
                 update_user()
             case "b":
                 valid = True
+                main_menu()
             case _:
                 print_color_msg("Invalid option", colors.COLOR_RED)
                 main_menu()
@@ -94,7 +95,7 @@ def update_user():
     main_menu()
 
 def backup_menu():
-    choice = handle_menu(["Backup User Home"])
+    choice = handle_menu(["Backup User Home", "Back"])
     valid = False
     while(not valid):
         match choice:
@@ -138,7 +139,11 @@ def backup_menu():
                     else:
                         print_color_msg("User does not exist", colors.COLOR_RED)  
                 valid =  True
-
+            case "b":
+                valid = True
+                clear()
+                main_menu()
+                
             case _:
                 print("Invalid option\n")
                 backup_menu()

@@ -1,4 +1,4 @@
-import os, datetime
+import os, datetime, subprocess
 import ui, colors, user
 
 def backup_user(username, exclude_list=[], backup_path = "/home/", ):
@@ -7,4 +7,4 @@ def backup_user(username, exclude_list=[], backup_path = "/home/", ):
     if len(exclude_list) >= 0:
         for folders in exclude_list:
             cmd += " --exclude=" + folders + " "
-    return os.system(cmd)
+    return subprocess.call(cmd, shell=True)

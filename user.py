@@ -1,5 +1,7 @@
-import os
+import os, subprocess, shlex
 import ui, colors
+
+USERMOD = shlex.split("usermod")
 
 def check_user_exists(user):
     return os.system(f"id {user} &>/dev/null ") == 0 
@@ -31,53 +33,65 @@ def create_user(username, uuid, group, root, set_password):
         #     for elem in group:
         #         cmd += "{elem},".format(elem=elem)
 
-    result = os.system(cmd)
-    if result == 0:
-        ui.print_color_msg("User created successfully", colors.COLOR_GREEN)
-        if (set_password == "y" or set_password == "Y"):
-            os.system(f"passwd {username}")
-        return 1;
-    else:
+    if subprocess.check_output(cmd, shell=True) == 0:
         ui.print_color_msg("Operation failed", colors.COLOR_RED)
         ui.user_menu()
         return 0;
+    else:
+        ui.print_color_msg("User created successfully", colors.COLOR_GREEN)
+        if (set_password == "y" or set_password == "Y"):
+            subprocess.call("passwd " + f"{username}", shell=True)
+        return 1;
+
+# def change_password(username):
 
 
 def change_username(prev_user, new_user):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename
-    
-    if os.system(f"usermod -l {new_user} {prev_user}") == 0:
-        ui.print_color_msg("Username changed successfully", colors.COLOR_GREEN)
-    else:
-        ui.error_message()
+    cmd = shlex.split("usermod")
+    args = shlex.split("-l {new} {old}".format(new=new_user, old=prev_user))
+
+    try:
+        print(USERMOD + args)
+        response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+        response = err.returncode
+
+    match response:
+        case 0:
+            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        case _:
+            ui.print_color_msg("change_username failed with the following error:", colors.COLOR_RED)
+            print(response)
 
 def change_user_main_group(username, main_group):
     # dato un username e una stringa (nuovo username) modifica il gruppo principale, non vengono fatti controlli sull'esistenza dell'usename
 
-    cmd = "usermod -g {main_group} {username}".format(main_group=main_group, username=username)
+    cmd = "USERMOD -g {main_group} {username}".format(main_group=main_group, username=username)
     return os.system(cmd) == 0
 
 def change_home_directory(username, path, move_files):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
     # nemmeno sull'esistenza della directory TODO: aggiungere controllo
 
-    cmd  = "usermod -d {path} {username}".format(path=path, username=username)
+    cmd  = "USERMOD -d {path} {username}".format(path=path, username=username)
     if(move_files == "y"):
-        cmd = "usermod -d {path} -m {username}".format(path=path, username=username)
+        cmd = "USERMOD -d {path} -m {username}".format(path=path, username=username)
     return os.system(cmd) == 0
 
 def change_user_uid(username, uid):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
     # nemmeno sulla corretteza del uid
 
-    cmd = "usermod -u {uid} {username}".format(uid=uid, username=username)
+    cmd = "USERMOD -u {uid} {username}".format(uid=uid, username=username)
     return os.system(cmd) == 0
 
 def change_user_shell(username, shell):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
     # nemmeno sull'esistenza della directory TODO: aggiungere controllo
 
-    cmd = "usermod -s {shell} {username}".format(shell=shell, username=username)
+    cmd = "USERMOD -s {shell} {username}".format(shell=shell, username=username)
     return os.system(cmd) == 0
 
 def delete_user(username):
