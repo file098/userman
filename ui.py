@@ -107,10 +107,38 @@ def backup_menu():
                     # check if user exists,if it doesnt then user has to repeat input, else function is called 
                     exists = user.check_user_exists(username)
                     if exists:
-                        backup.backup_user(username)
+
+                        # prompt user to enter backup save path
+                        backup_path = input("Where do you want to save the backup? (if not speciefied it will be saved in /home)\n").strip()
+                        # list parameter can be void or a list of paths
+                        exclude = input("Do you want to exclude some folders? (y/n)\n").lower().strip()
+                        stop_excluded_folders = False
+                        if(exclude == "y"):
+                            folders = []
+                            print('Please enter "done" to stop adding folders')
+                            while not stop_excluded_folders:
+                                # the loop keeps on getting input from user until it enconters the string "done"
+
+                                folder = input("Please write the path of the excluded folder: ")
+                                if( folder == "done" ):
+                                    stop_excluded_folders = True
+                                else:
+                                    folders.append(folder)
+
+                            # once it's done it calls the backup function
+                            backup.backup_user(username, folders, backup_path)
+                        else:
+                            # function without folder exclusion
+                            if(backup.backup_user(username, [], backup_path) == 0):
+                                clear()
+                                print_color_msg("Operation Successfully completed", colors.COLOR_GREEN)
+                                main_menu()
+                            else:   
+                                print_color_msg("Something went wrong", colors.COLOR_RED)
                     else:
                         print_color_msg("User does not exist", colors.COLOR_RED)  
                 valid =  True
+
             case _:
                 print("Invalid option\n")
                 backup_menu()
@@ -119,7 +147,7 @@ def backup_menu():
 
 def handle_menu(choices):
     print_choices(choices)
-    return what_to_do()
+    return what_to_do() 
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
