@@ -2,7 +2,13 @@ import os
 import ui, colors
 
 def check_user_exists(user):
-    return os.system(f"id {user} &>/dev/null ") == 0   
+    return os.system(f"id {user} &>/dev/null ") == 0 
+
+def list_users():
+    # return the list of users present in the user database
+
+    os.system("getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:")
+    print("\n")
 
 def create_user(username, uuid, group, root, set_password):
     # given an username, the function will create a new user

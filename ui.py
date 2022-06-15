@@ -1,11 +1,9 @@
-import os, re, atexit
-import user, colors
+import os, re, atexit, ast
+import user, colors, backup
 
 def main_menu():
     main_title()
-    main_menu_choices = ["User management", "Folders management", "Backups", "Quit"]
-    print_choices(main_menu_choices)
-    choice = what_to_do()
+    choice = handle_menu(["User management", "Folders management", "Backups", "Quit"])
     valid = False
     while(not valid):
         match choice:
@@ -16,7 +14,7 @@ def main_menu():
                 print("Folders")
                 valid = True
             case "3":
-                print("Backups")
+                backup_menu()
                 valid = True
             case "q":
                 exit()
@@ -27,9 +25,7 @@ def main_menu():
 
 
 def user_menu():
-    user_choices = ["Create user", "Delete user","Show users", "Update users", "Back"]
-    print_choices(user_choices)
-    choice = what_to_do()
+    choice = handle_menu(["Create user", "Delete user","Show users", "Update users", "Back"])
     valid = False
     while(not valid):
         match choice:
@@ -42,17 +38,16 @@ def user_menu():
                 user.create_user(username, uuid, group, system, passwd)
                 valid = True
             case "2":
-                list_users()
+                user.list_users()
                 username = input("Which user do you want to delete?\n")
                 valid = True
                 user.delete_user(username)
             case "3":
-                list_users()
+                user.list_users()
                 valid = True
                 user_menu()
             case "4":
                 update_user()
-                
             case "b":
                 valid = True
             case _:
@@ -62,13 +57,10 @@ def user_menu():
 
 def update_user():
     print("Which user do you want to update?\n")
-    list_users()
+    user.list_users()
     username = input("\n").strip()
     if user.check_user_exists(username):
-        update_choices = ["Change username", "Change home directory", "Change user's UID", "Add group to user", "Change user's shell", "Back", "Main menu"]
-        print_choices(update_choices)
-        choice = what_to_do()
-
+        choice = handle_menu(["Change username", "Change home directory", "Change user's UID", "Add group to user", "Change user's shell", "Back", "Main menu"])
         valid = False
         while(not valid):
             match choice:
@@ -101,11 +93,33 @@ def update_user():
         update_user()
     main_menu()
 
-def list_users():
-    # return the list of users present in the user database
+def backup_menu():
+    choice = handle_menu(["Backup User Home"])
+    valid = False
+    while(not valid):
+        match choice:
+            case "1":
+                user.list_users()
+                exists = False
+                while not exists:
+                    username = input("Which user to backup?\n")
+                    
+                    # check if user exists,if it doesnt then user has to repeat input, else function is called 
+                    exists = user.check_user_exists(username)
+                    if exists:
+                        backup.backup_user(username)
+                    else:
+                        print_color_msg("User does not exist", colors.COLOR_RED)  
+                valid =  True
+            case _:
+                print("Invalid option\n")
+                backup_menu()
 
-    os.system("getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:")
-    print("\n")
+
+
+def handle_menu(choices):
+    print_choices(choices)
+    return what_to_do()
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -145,10 +159,13 @@ def nice_quit():
     print_color_msg("Goodbye!", colors.COLOR_MAGENTA)
 
 def what_to_do():
-    # function to get an input form the user with soft quit
+    # function to get an input form the user 
+    # also handles soft quit
 
     atexit.register(nice_quit)
-    return input('What should I do?\n\n')
+    user_input = input('What should I do?\n\n')
+    print("\n")
+    return user_input
 
 def main_title():
     # welocome title
