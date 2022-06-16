@@ -8,8 +8,8 @@ def check_user_exists(user):
 
 def list_users():
     # return the list of users present in the user database
-
-    os.system("getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:")
+    cmd = "getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:"
+    os.system(cmd)
     print("\n")
 
 def create_user(username, uuid, group, root, set_password):
@@ -52,7 +52,6 @@ def change_username(prev_user, new_user):
     args = shlex.split("-l {new} {old}".format(new=new_user, old=prev_user))
 
     try:
-        print(USERMOD + args)
         response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as err:
         ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
@@ -68,31 +67,81 @@ def change_username(prev_user, new_user):
 def change_user_main_group(username, main_group):
     # dato un username e una stringa (nuovo username) modifica il gruppo principale, non vengono fatti controlli sull'esistenza dell'usename
 
-    cmd = "USERMOD -g {main_group} {username}".format(main_group=main_group, username=username)
-    return os.system(cmd) == 0
+    args = shlex.split("-g {main_group} {username}".format(main_group=main_group, username=username))
+    try:
+        response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+        response = err.returncode
+
+    match response:
+        case 0:
+            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        case _:
+            ui.print_color_msg("change_user_main_group failed with the following error:", colors.COLOR_RED)
+            print(response)
+
 
 def change_home_directory(username, path, move_files):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
     # nemmeno sull'esistenza della directory TODO: aggiungere controllo
 
-    cmd  = "USERMOD -d {path} {username}".format(path=path, username=username)
-    if(move_files == "y"):
-        cmd = "USERMOD -d {path} -m {username}".format(path=path, username=username)
-    return os.system(cmd) == 0
+    if(move_files == "y"): 
+        args = shlex.split("-g {path} -m {username}".format(path=path, username=username))
+    else:
+        args = shlex.split("-g {path} {username}".format(path=path, username=username))
+
+    try:
+        response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+        response = err.returncode
+
+    match response:
+        case 0:
+            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        case _:
+            ui.print_color_msg("change_home_directory failed with the following error:", colors.COLOR_RED)
+            print(response)
+
+
 
 def change_user_uid(username, uid):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
     # nemmeno sulla corretteza del uid
 
-    cmd = "USERMOD -u {uid} {username}".format(uid=uid, username=username)
-    return os.system(cmd) == 0
+    args = shlex.split("-u {uid} {username}".format(uid=uid, username=username))
+    try:
+        response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+        response = err.returncode
+
+    match response:
+        case 0:
+            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        case _:
+            ui.print_color_msg("change_user_uid failed with the following error:", colors.COLOR_RED)
+            print(response)
 
 def change_user_shell(username, shell):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
     # nemmeno sull'esistenza della directory TODO: aggiungere controllo
 
-    cmd = "USERMOD -s {shell} {username}".format(shell=shell, username=username)
-    return os.system(cmd) == 0
+    args = shlex.split("-s {shell} {username}".format(shell=shell, username=username))
+    try:
+        response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+        response = err.returncode
+
+    match response:
+        case 0:
+            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        case _:
+            ui.print_color_msg("change_user_shell failed with the following error:", colors.COLOR_RED)
+            print(response)
+
 
 def delete_user(username):
     # dato un username la funzione controlla l' esistenza dell'username e in caso di corretteza, elimina l'utente
@@ -101,7 +150,22 @@ def delete_user(username):
 
     user = username.strip()
     if check_user_exists(user):
-        os.system(f"userdel {user}")
-        ui.print_color_msg(f"User {username} deleted", colors.COLOR_GREEN)
+        cmd = shlex.split("userdel")
+        args = shlex.split("{username}".format(username=username))
+        try:
+            response = subprocess.check_call(cmd + args, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+            response = err.returncode
+
+        match response:
+            case 0:
+                ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+                return 0
+            case _:
+                ui.print_color_msg("Error, I can't delete the inserted user", colors.COLOR_RED)
+                print(response)
+                return response
     else:
-        ui.print_color_msg("Error, I can't delete the user inserted", colors.COLOR_RED)
+        ui.print_color_msg("User does not exist", colors.COLOR_RED)
+        return 1

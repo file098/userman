@@ -40,8 +40,7 @@ def user_menu():
             case "2":
                 user.list_users()
                 username = input("Which user do you want to delete?\n")
-                valid = True
-                user.delete_user(username)
+                valid = user.delete_user(username) == 0
             case "3":
                 user.list_users()
                 valid = True
@@ -130,12 +129,8 @@ def backup_menu():
                             backup.backup_user(username, folders, backup_path)
                         else:
                             # function without folder exclusion
-                            if(backup.backup_user(username, [], backup_path) == 0):
-                                clear()
-                                print_color_msg("Operation Successfully completed", colors.COLOR_GREEN)
-                                main_menu()
-                            else:   
-                                print_color_msg("Something went wrong", colors.COLOR_RED)
+                            backup.backup_user(username, [], backup_path)
+                            main_menu()
                     else:
                         print_color_msg("User does not exist", colors.COLOR_RED)  
                 valid =  True
@@ -195,7 +190,8 @@ def what_to_do():
     # function to get an input form the user 
     # also handles soft quit
 
-    atexit.register(nice_quit)
+    # atexit.register(nice_quit)
+
     user_input = input('What should I do?\n\n')
     print("\n")
     return user_input
