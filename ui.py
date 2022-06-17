@@ -1,4 +1,4 @@
-import os, re, atexit, ast
+import os, re, atexit, ast, sys
 import user, colors, backup
 
 def main_menu():
@@ -11,13 +11,13 @@ def main_menu():
                 user_menu()
                 valid = True
             case "2":
-                print("Folders")
+                print("Implements code for folders management")
                 valid = True
             case "3":
                 backup_menu()
                 valid = True
             case "q":
-                exit()
+                sys.exit("Goodbye!")
             case _:
                 clear()
                 print_color_msg("Invalid option", colors.COLOR_RED)
@@ -40,13 +40,15 @@ def user_menu():
             case "2":
                 user.list_users()
                 username = input("Which user do you want to delete?\n")
-                valid = user.delete_user(username) == 0
+                delete_home = input("Do you want to delete the user's home directory? (y/n)\n").lower().strip() == "y"
+                valid = user.delete_user(username, delete_home) == 0
             case "3":
                 user.list_users()
                 valid = True
                 user_menu()
             case "4":
                 update_user()
+                valid = True
             case "b":
                 valid = True
                 main_menu()
@@ -59,7 +61,7 @@ def update_user():
     print("Which user do you want to update?\n")
     user.list_users()
     username = input("\n").strip()
-    if user.check_user_exists(username):
+    if username != "" and user.check_user_exists(username):
         choice = handle_menu(["Change username", "Change home directory", "Change user's UID", "Add group to user", "Change user's shell", "Back", "Main menu"])
         valid = False
         while(not valid):
@@ -69,9 +71,10 @@ def update_user():
                     user.change_username(username, new_user)
                     valid = True
                 case "2":
-                    move_files = input("Move all files to new directory? (y/n)\n").lower().strip()
+                    move_files = input("Move all files to new directory? (y/n)\n").lower().strip() == "y"
                     destination = input("Insert the destination directory: ")
-                    valid = user.change_home_directory(username, destination, move_files)
+                    user.change_home_directory(username, destination, move_files)
+                    valid = True
                 case "3":
                     uid = input("Enter UID:")
                     valid = user.change_user_uid(username, shell)
@@ -111,9 +114,10 @@ def backup_menu():
                         # prompt user to enter backup save path
                         backup_path = input("Where do you want to save the backup? (if not speciefied it will be saved in /home)\n").strip()
                         # list parameter can be void or a list of paths
-                        exclude = input("Do you want to exclude some folders? (y/n)\n").lower().strip()
+                        exclude = input("Do you want to exclude some folders? (y/n)\n").lower().strip() == "y"
+                        compress = input("Do you want to compress the backup? (y/n)\n").lower().strip() == "y"
                         stop_excluded_folders = False
-                        if(exclude == "y"):
+                        if exclude:
                             folders = []
                             print('Please enter "done" to stop adding folders')
                             while not stop_excluded_folders:
@@ -126,10 +130,10 @@ def backup_menu():
                                     folders.append(folder)
 
                             # once it's done it calls the backup function
-                            backup.backup_user(username, folders, backup_path)
+                            backup.backup_user(username, folders, backup_path, compress)
                         else:
                             # function without folder exclusion
-                            backup.backup_user(username, [], backup_path)
+                            backup.backup_user(username, [], backup_path, compress)
                             main_menu()
                     else:
                         print_color_msg("User does not exist", colors.COLOR_RED)  
@@ -179,18 +183,11 @@ def print_color_msg(msg, color):
 
 def error_message():
     # simple error message
-
     print("Error")
-
-def nice_quit():
-    # quit message and last operations
-    print_color_msg("Goodbye!", colors.COLOR_MAGENTA)
 
 def what_to_do():
     # function to get an input form the user 
     # also handles soft quit
-
-    # atexit.register(nice_quit)
 
     user_input = input('What should I do?\n\n')
     print("\n")

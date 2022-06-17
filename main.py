@@ -7,13 +7,11 @@ def is_root():
     # else it quits
 
     if os.geteuid() != 0:
-        ui.print_color_msg("You must be root to run this program", colors.COLOR_RED)
-        exit()
+        sys.exit("You must be root to run this program")
 
 def main():
 
     is_root()
     ui.clear()
     ui.main_menu()
-
 main()
