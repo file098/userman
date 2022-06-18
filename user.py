@@ -3,6 +3,12 @@ import ui, colors
 
 USERMOD = shlex.split("usermod")
 
+
+def replaceTextBetween(originalText, delimeterA, delimterB, replacementText):
+    leadingText = originalText.split(delimeterA)[0]
+    trailingText = originalText.split(delimterB)[1]
+    return leadingText + delimeterA + replacementText + delimterB + trailingText
+
 def check_user_exists(user):
     return os.system(f"id {user} &>/dev/null ") == 0 
 
@@ -32,7 +38,8 @@ def create_user(username, uuid, group, root, set_password):
 
     try:
         response = subprocess.check_call(cmd + args, stderr=subprocess.STDOUT)
-        subprocess.call("mkdir -p /home/{username}".format(username=username))
+        create_dir_cmd = shlex.split("mkdir -p /home/{username}".format(username=username))
+        subprocess.call(create_dir_cmd)
     except subprocess.CalledProcessError as err:
         ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
         response = err.returncode
@@ -80,42 +87,44 @@ def change_user_main_group(username, main_group):
 def change_home_directory(username, path, move_files =False):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa
 
-    create_dir = "mkdir {path}".format(path=path)
-    own_dir = "chown {username}:{username} {path}".format(username=username, path=path)
-    permission_dir = "chmod 700 {path}".format(path=path)
-    chg_user = "usermod --home {path} {username}".format(username=username, path=path)
-    
-    with open("/etc/passwd", 'r') as f,open("/etc/passdtest",'w') as o:
-        data = f.read()
-
-        cmd = shlex.split(("getent passwd {username}").format(username=username))
-
-        user_passwd_entry = str(subprocess.Popen(cmd, stdout=subprocess.PIPE ).communicate()[0]).replace("/n'", '').replace("b'", ""))
-
-        user_entry = "test:x:1001:100::/home/test:/run/current-system/sw/bin/bash"
-        new_entry = user_passwd_entry.replace("::", '').replace()
-        
-        data = data.replace(user_passwd_entry,new_entry)
-        o.write(data)
-        o.close()
-
-    # TODO: I need to do this procedure to change home directory
-    # * Run the following commands to do it.
-
     #   * mkdir /home/new_home_directory
     #   * chown username:username /home/new_home_directory
     #   * chmod 700 /home/new_home_directory
     #   * usermod --home /home/new_home_directory username
     #   * Change the home directory by editing /etc/passwd
+    if check_user_exists(username):
+        if not os.path.isdir(path):
+            create_dir = "mkdir {path}".format(path=path)
+            os.system(create_dir)
+        own_dir = "chown {username}:{username} {path}".format(username=username, path=path)
+        permission_dir = "chmod 700 {path}".format(path=path)
+        chg_user = "usermod --home {path} {username}".format(username=username, path=path)
+        
+        with open("/etc/passwd", 'r') as f,open("/etc/passdtest",'w') as o:
+            data = f.read()
 
-    if os.path.isdir(path) and user.check_user_exists(username):
+            # gets user's entry in /etc/passwd
+            cmd = shlex.split(("getent passwd {username}").format(username=username))
+
+            # gets user's home directory 
+            cmd_user_dir = "getent passwd {username} | cut -d: -f6".format(username=username)
+            p = subprocess.Popen(cmd_user_dir, stdout=subprocess.PIPE, shell=True)
+            current_dir = str(p.communicate()[0]).replace("b'","").replace("\\n'","")
+
+
+            user_passwd_entry = str(subprocess.Popen(cmd, stdout=subprocess.PIPE ).communicate()[0]).replace("\\n'", '').replace("b'", "")
+            new_entry = replaceTextBetween(user_passwd_entry, "::", current_dir, path)
+
+            data = data.replace(user_passwd_entry,new_entry)
+            o.write(data)
+            o.close()
+
 
         args = shlex.split("-d {path} {username}".format(path=path, username=username))
         if move_files: 
             args += shlex.split("-m")
         try:
-            print(USERMOD + args)
-            response = subprocess.check_call(USERMOD + args,shell=True, stderr=subprocess.STDOUT)
+            response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as err:
             ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
             response = err.returncode

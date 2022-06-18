@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, subprocess, shlex
 import ui, user, colors
 import atexit
 
@@ -14,4 +14,5 @@ def main():
     is_root()
     ui.clear()
     ui.main_menu()
+
 main()
