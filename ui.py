@@ -3,7 +3,7 @@ import user, colors, backup
 
 def main_menu():
     main_title()
-    choice = handle_menu(["User management", "Folders management", "Backups", "Quit"])
+    choice = handle_menu(["User management", "Backups", "Quit"])
     valid = False
     while(not valid):
         match choice:
@@ -11,9 +11,6 @@ def main_menu():
                 user_menu()
                 valid = True
             case "2":
-                print("Implements code for folders management")
-                valid = True
-            case "3":
                 backup_menu()
                 valid = True
             case "q":
@@ -59,7 +56,7 @@ def user_menu():
 
 def update_user():
     print("Which user do you want to update?\n")
-    user.list_users()
+    user.list_usernames()
     username = input("\n").strip()
     if username != "" and user.check_user_exists(username):
         choice = handle_menu(["Change username", "Change home directory", "Change user's UID", "Add group to user", "Change user's shell", "Back", "Main menu"])
@@ -79,6 +76,7 @@ def update_user():
                     uid = input("Enter UID:")
                     valid = user.change_user_uid(username, shell)
                 case "4":
+                    group = input("Insert the group you want to add: ")
                     valid = user.change_user_main_group(username, group)
                 case "5":
                     valid = user.change_user_shell(username, shell)
@@ -102,7 +100,7 @@ def backup_menu():
     while(not valid):
         match choice:
             case "1":
-                user.list_users()
+                user.list_usernames()
                 exists = False
                 while not exists:
                     username = input("Which user to backup?\n")
@@ -155,6 +153,19 @@ def handle_menu(choices):
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def print_users(usersArray):
+    count = 0
+    for users in usersArray:
+        count += 1
+        counter = "* " + str(count)
+        username = " USERNAME: " + users.username
+        name = " FULL NAME: " + users.name 
+        uid = " UID: " + users.uid 
+        id = " ID: " + users.id
+        home = " HOME DIRECTORY: " + users.home_folder
+        shell = " SHELL: " + users.shell
+        print(counter + username + name + uid + id + home + shell)
 
 def print_choices(choices):
     # function that takes a list of choices 

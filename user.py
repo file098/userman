@@ -3,20 +3,67 @@ import ui, colors
 
 USERMOD = shlex.split("usermod")
 
+class User:
 
-def replaceTextBetween(originalText, delimeterA, delimterB, replacementText):
-    leadingText = originalText.split(delimeterA)[0]
-    trailingText = originalText.split(delimterB)[1]
-    return leadingText + delimeterA + replacementText + delimterB + trailingText
+    username = None
+    name = None
+    uid = None
+    id = None
+    home_folder = None
+    shell = None
+    superuser = False
+    groups = []
 
 def check_user_exists(user):
     return os.system(f"id {user} &>/dev/null ") == 0 
 
-def list_users():
+def list_usernames():
     # return the list of users present in the user database
-    cmd = "getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:"
-    os.system(cmd)
+
+    os.system("getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:")
     print("\n")
+
+def list_users():
+
+    with open("/etc/passwd", 'r') as f: 
+            lines = f.readlines()
+
+            userInfo = []
+            for line in lines:
+                username, sep, tail = line.partition(':')
+
+                userObj = User()
+
+                for i in range(1, 8):
+                    cmd = "getent passwd {username}| cut -d: -f{i}".format(username=username, i=i)
+                    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+                    output = str(p.communicate()[0]).replace("b'","").replace("\\n'","")
+                    
+                    match i:
+                        case 1 :
+                            userObj.username = output
+                        case 2 :
+                            userObj.name = output
+                        case 3 :
+                            userObj.uid = output
+                        case 4 :
+                            userObj.id = output
+                        case 5 :
+                            userObj.name = output
+                        case 6 :
+                            userObj.home_folder = output
+                        case 7:
+                            userObj.shell = output
+
+                userInfo.append(userObj)
+
+            f.close()
+            ui.print_users(userInfo)
+
+    # return the list of users present in the user database
+    # cmd = "getent passwd | egrep  '(/bin/bash)|(/bin/zsh)|(/bin/sh)' | cut -f1 -d:"
+    # os.system(cmd)
+    # print("\n")
 
 def create_user(username, uuid, group, root, set_password):
     # given an username, the function will create a new user
@@ -80,8 +127,10 @@ def change_user_main_group(username, main_group):
         ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
         response = err.returncode
         print(response)
+        return False
     else:
         ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        return True
 
 
 def change_home_directory(username, path, move_files =False):
@@ -93,29 +142,49 @@ def change_home_directory(username, path, move_files =False):
     #   * usermod --home /home/new_home_directory username
     #   * Change the home directory by editing /etc/passwd
     if check_user_exists(username):
+        
         if not os.path.isdir(path):
+        # if the passed path doesnt exist, it creates it
             create_dir = "mkdir {path}".format(path=path)
             os.system(create_dir)
-        own_dir = "chown {username}:{username} {path}".format(username=username, path=path)
-        permission_dir = "chmod 700 {path}".format(path=path)
-        chg_user = "usermod --home {path} {username}".format(username=username, path=path)
         
-        with open("/etc/passwd", 'r') as f,open("/etc/passdtest",'w') as o:
+        # preparing ownership commands
+        own_dir_cmd = shlex.split("chown {username}:users {path}".format(username=username, path=path))
+        permission_dir_cmd = shlex.split("chmod 700 {path}".format(path=path))
+        chg_user_cmd = shlex.split("usermod --home {path} {username}".format(username=username, path=path))
+        
+        # running above commands 
+        subprocess.Popen(own_dir_cmd)
+        subprocess.Popen(permission_dir_cmd)
+        subprocess.Popen(chg_user_cmd)
+
+        with open("/etc/passwd", 'r') as f,open("/etc/passwd",'w') as o:
             data = f.read()
 
             # gets user's entry in /etc/passwd
-            cmd = shlex.split(("getent passwd {username}").format(username=username))
+            current_dir_cmd = shlex.split(("getent passwd {username}").format(username=username))
 
-            # gets user's home directory 
-            cmd_user_dir = "getent passwd {username} | cut -d: -f6".format(username=username)
-            p = subprocess.Popen(cmd_user_dir, stdout=subprocess.PIPE, shell=True)
-            current_dir = str(p.communicate()[0]).replace("b'","").replace("\\n'","")
+            new_passwd_entry=""
+            # current_dir = ""
+            for i in range(1, 8):
+                # gets entry by entry of the getent passwd command
+                cmd = "getent passwd {username} | cut -d: -f{i}".format(username=username, i=i)
+                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+                output = str(p.communicate()[0]).replace("b'","").replace("\\n'","")
+                
+                # /etc/passwd entry that contains home folder
+                if i == 6:
+                    # current_dir = output
+                    output = path
 
+                new_passwd_entry += output
+                
+                if not i == 7:
+                    new_passwd_entry += ":"
 
-            user_passwd_entry = str(subprocess.Popen(cmd, stdout=subprocess.PIPE ).communicate()[0]).replace("\\n'", '').replace("b'", "")
-            new_entry = replaceTextBetween(user_passwd_entry, "::", current_dir, path)
+            user_passwd_entry = str(subprocess.Popen(current_dir_cmd, stdout=subprocess.PIPE ).communicate()[0]).replace("\\n'", '').replace("b'", "")
 
-            data = data.replace(user_passwd_entry,new_entry)
+            data = data.replace(user_passwd_entry,new_passwd_entry)
             o.write(data)
             o.close()
 
@@ -155,22 +224,27 @@ def change_user_uid(username, uid):
 
 def change_user_shell(username, shell):
     # dato un username e una stringa (nuovo username) modifica l'username con la nuova stringa, non vengono fatti controlli sull'esistenza dell'usename 
-    # nemmeno sull'esistenza della directory TODO: aggiungere controllo
+    
+    if os.path.exists(shell):
+        args = shlex.split("-s {shell} {username}".format(shell=shell, username=username))
+        try:
+            response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
+            response = err.returncode
 
-    args = shlex.split("-s {shell} {username}".format(shell=shell, username=username))
-    try:
-        response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as err:
-        ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
-        response = err.returncode
-
-    match response:
-        case 0:
-            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
-        case _:
-            ui.print_color_msg("change_user_shell failed with the following error:", colors.COLOR_RED)
-            print(response)
-
+        match response:
+            case 0:
+                ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+                return True
+            case _:
+                
+                ui.print_color_msg("change_user_shell failed with the following error:", colors.COLOR_RED)
+                print(response)
+                return False
+    else:
+        ui.print_color_msg("Provided shell does not exist on your system", colors.COLOR_RED)
+        return False
 
 def delete_user(username, delete_user_home=False):
     # dato un username la funzione controlla l' esistenza dell'username e in caso di corretteza, elimina l'utente

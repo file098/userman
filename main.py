@@ -12,7 +12,9 @@ def is_root():
 def main():
 
     is_root()
+    
     ui.clear()
     ui.main_menu()
+
 
 main()
