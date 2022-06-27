@@ -112,8 +112,8 @@ def backup_menu():
                         # prompt user to enter backup save path
                         backup_path = input("Where do you want to save the backup? (if not speciefied it will be saved in /home)\n").strip()
                         # list parameter can be void or a list of paths
-                        exclude = input("Do you want to exclude some folders? (y/n)\n").lower().strip() == "y"
                         compress = input("Do you want to compress the backup? (y/n)\n").lower().strip() == "y"
+                        exclude = input("Do you want to exclude some folders? (y/n)\n").lower().strip() == "y"
                         stop_excluded_folders = False
                         if exclude:
                             folders = []
@@ -132,7 +132,7 @@ def backup_menu():
                         else:
                             # function without folder exclusion
                             backup.backup_user(username, [], backup_path, compress)
-                            main_menu()
+                        main_menu()
                     else:
                         print_color_msg("User does not exist", colors.COLOR_RED)  
                 valid =  True

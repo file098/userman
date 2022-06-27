@@ -17,7 +17,7 @@ def backup_user(username, exclude_list=[], backup_path="/home", compress=False):
             backup_path = path
 
     # check if folder and user exits otherwise stops
-    if os.path.isdir(backup_path) and user.check_user_exists(username):
+    if user.check_user_exists(username):
 
         args = shlex.split("-av /home/{username} {backup_path}".format(username=username, backup_path=backup_path))
         
@@ -29,7 +29,6 @@ def backup_user(username, exclude_list=[], backup_path="/home", compress=False):
                 args.append("--exclude=" + folders)
         # Tries to run command, if it fails then it will print the error message
         try:
-            print(["rsync"] + args)
             response = subprocess.check_call(["rsync"] + args, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as err:
             ui.print_color_msg("backup_user failed with the following error:", colors.COLOR_RED)
