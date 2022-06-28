@@ -72,7 +72,7 @@ def create_user(username, uuid, group, root, set_password):
 
     cmd = shlex.split("useradd")
 
-    args = shlex.split("-d /home/{username} {username}".format(group=group, username=username))
+    args = shlex.split("-m {username}".format(group=group, username=username))
     if (root == "y"):
         args += shlex.split("-r")
 
@@ -85,8 +85,6 @@ def create_user(username, uuid, group, root, set_password):
 
     try:
         response = subprocess.check_call(cmd + args, stderr=subprocess.STDOUT)
-        create_dir_cmd = shlex.split("mkdir -p /home/{username}".format(username=username))
-        subprocess.call(create_dir_cmd)
     except subprocess.CalledProcessError as err:
         ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
         response = err.returncode
@@ -140,7 +138,6 @@ def change_home_directory(username, path, move_files =False):
     #   * chown username:username /home/new_home_directory
     #   * chmod 700 /home/new_home_directory
     #   * usermod --home /home/new_home_directory username
-    #   * Change the home directory by editing /etc/passwd
     if check_user_exists(username):
         
         if not os.path.isdir(path):
@@ -154,52 +151,16 @@ def change_home_directory(username, path, move_files =False):
         chg_user_cmd = shlex.split("usermod --home {path} {username}".format(username=username, path=path))
         
         # running above commands 
+        if move_files:
+            chg_user_cmd += "-r"
+            
         subprocess.Popen(own_dir_cmd)
         subprocess.Popen(permission_dir_cmd)
         subprocess.Popen(chg_user_cmd)
 
-        with open("/etc/passwd", 'r') as f,open("/etc/passwd",'w') as o:
-            data = f.read()
+        ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
 
-            # gets user's entry in /etc/passwd
-            current_dir_cmd = shlex.split(("getent passwd {username}").format(username=username))
-
-            new_passwd_entry=""
-            # current_dir = ""
-            for i in range(1, 8):
-                # gets entry by entry of the getent passwd command
-                cmd = "getent passwd {username} | cut -d: -f{i}".format(username=username, i=i)
-                p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-                output = str(p.communicate()[0]).replace("b'","").replace("\\n'","")
-                
-                # /etc/passwd entry that contains home folder
-                if i == 6:
-                    # current_dir = output
-                    output = path
-
-                new_passwd_entry += output
-                
-                if not i == 7:
-                    new_passwd_entry += ":"
-
-            user_passwd_entry = str(subprocess.Popen(current_dir_cmd, stdout=subprocess.PIPE ).communicate()[0]).replace("\\n'", '').replace("b'", "")
-
-            data = data.replace(user_passwd_entry,new_passwd_entry)
-            o.write(data)
-            o.close()
-
-
-        args = shlex.split("-d {path} {username}".format(path=path, username=username))
-        if move_files: 
-            args += shlex.split("-m")
-        try:
-            response = subprocess.check_call(USERMOD + args, stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as err:
-            ui.print_color_msg("Operation failed with the following error:", colors.COLOR_RED)
-            response = err.returncode
-            print(response)
-        else:
-            ui.print_color_msg("Operation successfully completed", colors.COLOR_GREEN)
+        
     else:
         ui.print_color_msg("Invalid path", colors.COLOR_RED)
 
@@ -253,13 +214,14 @@ def delete_user(username, delete_user_home=False):
     user = username.strip()
     if check_user_exists(user):
         # controllo home 
-        if delete_user_home:
-            delete = "rm -r /home/{username}".format(username=username)
-            confirm_delete = input("Are you sure you want to delete this user? (y/n)\n").lower().strip() == "y"
-            # if home exists, it delets it
-            confirm_delete and os.system(delete)
         cmd = shlex.split("userdel")
         args = shlex.split("{username}".format(username=username))
+        if delete_user_home:
+            # delete = "rm -r /home/{username}".format(username=username)
+            confirm_delete = input("Are you sure you want to delete this user? (y/n)\n").lower().strip() == "y"
+            # if home exists, it delets it
+            if confirm_delete: 
+                args += "-r"
         try:
             response = subprocess.check_call(cmd + args, stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as err:
