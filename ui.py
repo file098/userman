@@ -35,7 +35,7 @@ def user_menu():
                 user.create_user(username, uuid, group, system, passwd)
                 valid = True
             case "2":
-                user.list_users()
+                user.list_usernames()
                 username = input("Which user do you want to delete?\n")
                 delete_home = input("Do you want to delete the user's home directory? (y/n)\n").lower().strip() == "y"
                 valid = user.delete_user(username, delete_home) == 0

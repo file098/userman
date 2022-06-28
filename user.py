@@ -252,10 +252,11 @@ def delete_user(username, delete_user_home=False):
 
     user = username.strip()
     if check_user_exists(user):
-
-        if delete_user_home: 
+        # controllo home 
+        if delete_user_home:
             delete = "rm -r /home/{username}".format(username=username)
-            confirm_delete = input("Are you sure you want to delete this user? (y/n)\n") == "y"
+            confirm_delete = input("Are you sure you want to delete this user? (y/n)\n").lower().strip() == "y"
+            # if home exists, it delets it
             confirm_delete and os.system(delete)
         cmd = shlex.split("userdel")
         args = shlex.split("{username}".format(username=username))
